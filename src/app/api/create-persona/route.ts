@@ -15,14 +15,13 @@ export async function POST(req: Request) {
     handle = handleMatch[1];
     personaName = handle;
   }
-  let publicProfiles: Record<string, any> = {};
+  let publicProfiles: Record<string, unknown> = {};
   if (handle) {
     const platforms = [
       { key: "instagram", url: `https://instagram.com/${handle}` },
       { key: "twitter", url: `https://twitter.com/${handle}` },
       { key: "x", url: `https://x.com/${handle}` },
       { key: "facebook", url: `https://facebook.com/${handle}` },
-      { key: "linkedin", url: `https://linkedin.com/in/${handle}` },
       { key: "medium", url: `https://medium.com/@${handle}` },
       { key: "hashnode", url: `https://${handle}.hashnode.dev` },
       { key: "peerlist", url: `https://peerlist.io/${handle}` },
@@ -113,6 +112,7 @@ export async function POST(req: Request) {
       `Listen up, it's ${personaName} speaking!`,
       `Aap sabko swagat hai, main hoon ${personaName}`,
     ];
+    console.log("Error generating intro templates:", e);
   }
   const styleTemplates = [
     `Personalized style for ${name}`,

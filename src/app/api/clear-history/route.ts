@@ -5,7 +5,7 @@ import path from "path";
 export async function POST(req: Request) {
   const { persona } = await req.json();
   const dataDir = path.join(process.cwd(), "data");
-  let cleared: string[] = [];
+  const cleared: string[] = []; // Use const for cleared
   if (persona && persona !== "all") {
     const file = path.join(dataDir, `${persona}-history.json`);
     if (fs.existsSync(file)) {

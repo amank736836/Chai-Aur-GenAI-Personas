@@ -48,7 +48,7 @@ function CopyableLink({ url }: { url: string }) {
 
 type ChatMessage =
     | { role: "user"; text: string }
-    | { role: "compare"; hitesh?: string; piyush?: string;[key: string]: any };
+    | ({ role: "compare"; hitesh?: string; piyush?: string } & { [key: string]: string | undefined });
 
 export type ChatAreaPersona = 'both' | 'hitesh' | 'piyush' | 'custom';
 type ChatAreaProps = {
