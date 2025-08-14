@@ -1,3 +1,48 @@
+function setCookie(name: string, value: string, days = 30) {
+  const expires = new Date(Date.now() + days * 864e5).toUTCString();
+  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/`;
+}
+
+function getCookie(name: string): string | null {
+  return document.cookie.split('; ').reduce((r, v) => {
+    const parts = v.split('=');
+    return parts[0] === name ? decodeURIComponent(parts[1]) : r;
+  }, null as string | null);
+}
+
+async function hashData(data: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const dataUint8 = encoder.encode(data);
+  const hashBuffer = await window.crypto.subtle.digest('SHA-256', dataUint8);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashString = btoa(String.fromCharCode(...hashArray));
+  return hashString;
+}
+
+async function saveChatToCookie(chat: ChatMessage[]) {
+  const json = JSON.stringify(chat);
+  const hash = await hashData(json);
+  setCookie('chatHistory', hash);
+}
+
+async function saveChatToCookieWithData(chat: ChatMessage[]) {
+  const json = JSON.stringify(chat);
+  const hash = await hashData(json);
+  setCookie('chatHistory', `${hash}|${btoa(json)}`);
+}
+
+function loadChatFromCookie(): ChatMessage[] | null {
+  const val = getCookie('chatHistory');
+  if (!val) return null;
+  const [hash, encoded] = val.split('|');
+  if (!encoded) return null;
+  try {
+    const json = atob(encoded);
+    return JSON.parse(json);
+  } catch {
+    return null;
+  }
+}
 "use client";
 import { useState, useRef, useEffect } from "react";
 import PersonaSelector from "./components/PersonaSelector";
@@ -56,6 +101,16 @@ export default function Home() {
   const [customImage, setCustomImage] = useState<string>(defaultCustomImage);
   const [message, setMessage] = useState("");
   const [chat, setChat] = useState<ChatMessage[]>([]);
+  // Load chat from cookie on mount
+  useEffect(() => {
+    const loaded = loadChatFromCookie();
+    if (loaded) setChat(loaded);
+  }, []);
+
+  // Save chat to cookie on change
+  useEffect(() => {
+    saveChatToCookieWithData(chat);
+  }, [chat]);
   const setPersona = (p: 'both' | 'hitesh' | 'piyush' | 'custom') => {
     setPersonaState(p);
     setChat([]);
