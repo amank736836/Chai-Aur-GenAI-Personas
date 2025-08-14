@@ -1,55 +1,11 @@
-function setCookie(name: string, value: string, days = 30) {
-  const expires = new Date(Date.now() + days * 864e5).toUTCString();
-  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/`;
-}
-
-function getCookie(name: string): string | null {
-  return document.cookie.split('; ').reduce((r, v) => {
-    const parts = v.split('=');
-    return parts[0] === name ? decodeURIComponent(parts[1]) : r;
-  }, null as string | null);
-}
-
-async function hashData(data: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const dataUint8 = encoder.encode(data);
-  const hashBuffer = await window.crypto.subtle.digest('SHA-256', dataUint8);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashString = btoa(String.fromCharCode(...hashArray));
-  return hashString;
-}
-
-async function saveChatToCookie(chat: ChatMessage[]) {
-  const json = JSON.stringify(chat);
-  const hash = await hashData(json);
-  setCookie('chatHistory', hash);
-}
-
-async function saveChatToCookieWithData(chat: ChatMessage[]) {
-  const json = JSON.stringify(chat);
-  const hash = await hashData(json);
-  setCookie('chatHistory', `${hash}|${btoa(json)}`);
-}
-
-function loadChatFromCookie(): ChatMessage[] | null {
-  const val = getCookie('chatHistory');
-  if (!val) return null;
-  const [hash, encoded] = val.split('|');
-  if (!encoded) return null;
-  try {
-    const json = atob(encoded);
-    return JSON.parse(json);
-  } catch {
-    return null;
-  }
-}
 "use client";
-import { useState, useRef, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
+import ChatArea from "./components/ChatArea";
+import { loadChatFromCookie, saveChatToCookieWithData } from "./components/CookieManager";
+import CustomPersonaInput from "./components/CustomPersonaInput";
+import MessageInput from "./components/MessageInput";
 import PersonaSelector from "./components/PersonaSelector";
 import PromptDisplay from "./components/PromptDisplay";
-import CustomPersonaInput from "./components/CustomPersonaInput";
-import ChatArea from "./components/ChatArea";
-import MessageInput from "./components/MessageInput";
 
 function useScrollHelpers() {
   const chatDivRef = useRef<HTMLDivElement>(null!);
