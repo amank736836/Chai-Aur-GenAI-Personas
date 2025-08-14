@@ -1,103 +1,310 @@
-import Image from "next/image";
+"use client";
+import { useState, useRef, useEffect } from "react";
+import PersonaSelector from "./components/PersonaSelector";
+import PromptDisplay from "./components/PromptDisplay";
+import CustomPersonaInput from "./components/CustomPersonaInput";
+import ChatArea from "./components/ChatArea";
+import MessageInput from "./components/MessageInput";
+
+function useScrollHelpers() {
+  const chatDivRef = useRef<HTMLDivElement>(null!);
+  const [atBottom, setAtBottom] = useState(true);
+  const [atTop, setAtTop] = useState(true);
+
+
+  useEffect(() => {
+    const chatDiv = chatDivRef.current;
+    if (!chatDiv) return;
+    const handleScroll = () => {
+      const isAtBottom = chatDiv.scrollHeight - chatDiv.scrollTop - chatDiv.clientHeight < 10;
+      setAtBottom(isAtBottom);
+      setAtTop(chatDiv.scrollTop < 10);
+    };
+    chatDiv.addEventListener('scroll', handleScroll);
+
+    handleScroll();
+    return () => chatDiv.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollUp = () => {
+    if (chatDivRef.current) {
+      chatDivRef.current.scrollTop -= 200;
+    }
+  };
+  const scrollDown = () => {
+    if (chatDivRef.current) {
+      chatDivRef.current.scrollTop += 200;
+    }
+  };
+  return { chatDivRef, atBottom, atTop, scrollUp, scrollDown, setAtBottom };
+}
+
+
+type ChatMessage =
+  | { role: "user"; text: string }
+  | { role: "compare"; hitesh?: string; piyush?: string;[key: string]: any };
+
+const defaultCustomImage = "/file.svg";
+const personaImages: Record<string, string> = {
+  hitesh: "https://yt3.ggpht.com/a/AGF-l7-GpYFwHDMQVXkOcO3Ra8bIoZhhiU3oluiJBw=s900-c-k-c0xffffffff-no-rj-mo",
+  piyush: "https://www.piyushgarg.dev/_next/image?url=%2Fimages%2Favatar.png&w=256&q=75",
+  custom: defaultCustomImage
+};
+
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [persona, setPersonaState] = useState<'both' | 'hitesh' | 'piyush' | 'custom'>('both');
+  const [customName, setCustomName] = useState("");
+  const [customReady, setCustomReady] = useState(false);
+  const [creatingPersona, setCreatingPersona] = useState(false);
+  const [customImage, setCustomImage] = useState<string>(defaultCustomImage);
+  const [message, setMessage] = useState("");
+  const [chat, setChat] = useState<ChatMessage[]>([]);
+  const setPersona = (p: 'both' | 'hitesh' | 'piyush' | 'custom') => {
+    setPersonaState(p);
+    setChat([]);
+  };
+  const [lastPrompt, setLastPrompt] = useState<string>("");
+  const [thinking, setThinking] = useState(false);
+  const [dotCount, setDotCount] = useState(1);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+  useEffect(() => {
+    if (!thinking) return;
+    let dir = 1;
+    const interval = setInterval(() => {
+      setDotCount((prev) => {
+        if (prev === 3) dir = -1;
+        if (prev === 1) dir = 1;
+        return prev + dir;
+      });
+    }, 400);
+    return () => clearInterval(interval);
+  }, [thinking]);
+  const chatEndRef = useRef<HTMLDivElement>(null!);
+  const firstAIResponseRef = useRef<HTMLDivElement>(null!);
+
+  const { chatDivRef, atBottom, atTop, scrollUp, scrollDown, setAtBottom } = useScrollHelpers();
+
+  useEffect(() => {
+
+    if (firstAIResponseRef.current) {
+      firstAIResponseRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+
+    setAtBottom(true);
+  }, [chat, setAtBottom]);
+
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+
+      const url = "/api/clear-history";
+      const data = JSON.stringify({ persona: "all" });
+      if (navigator.sendBeacon) {
+        const blob = new Blob([data], { type: "application/json" });
+        navigator.sendBeacon(url, blob);
+      } else {
+
+        fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: data,
+          keepalive: true,
+        });
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, []);
+
+
+  async function createCustomPersona() {
+    if (!customName.trim()) return;
+    setCreatingPersona(true);
+    setCustomReady(false);
+    setCustomImage(defaultCustomImage);
+
+    await fetch("/api/create-persona", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: customName }),
+    });
+
+    let imageUrl = defaultCustomImage;
+    try {
+      const imgRes = await fetch("/api/fetch-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: customName }),
+      });
+      const imgData = await imgRes.json();
+      if (imgData.image) {
+
+        const headRes = await fetch(imgData.image, { method: "HEAD" });
+        const size = headRes.headers.get("content-length");
+        if (!size || parseInt(size) < 500000) {
+          imageUrl = imgData.image;
+        }
+      }
+    } catch { }
+    setCustomImage(imageUrl);
+    setTimeout(() => {
+      setCreatingPersona(false);
+      setCustomReady(true);
+    }, 2000);
+  }
+
+  async function sendMessage() {
+    if (!message.trim()) return;
+    if (persona === "custom" && !customReady) return;
+    setThinking(true);
+
+    const dots = '.'.repeat(dotCount);
+    if (persona === "custom") {
+      setChat([
+        ...chat,
+        { role: "user", text: message },
+        { role: "compare", hitesh: "", piyush: "", [customName]: `${customName} is thinking${dots}` },
+      ]);
+    } else {
+      setChat([
+        ...chat,
+        { role: "user", text: message },
+        { role: "compare", hitesh: persona === "hitesh" || persona === "piyush" ? `Hitesh is thinking${dots}` : "", piyush: persona === "hitesh" || persona === "piyush" ? `Piyush is thinking${dots}` : "" },
+      ]);
+    }
+    try {
+      const promptRes = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message, persona: persona === "custom" ? customName.toLowerCase().replace(/\s+/g, "-") : persona, customName, debugPrompt: true }),
+      });
+      let data = null;
+      try {
+        data = await promptRes.json();
+      } catch (err) {
+        setThinking(false);
+        setChat([
+          ...chat,
+          { role: "user", text: message },
+          { role: "compare", hitesh: "Sorry, there was a problem with the response.", piyush: "Sorry, there was a problem with the response." },
+        ]);
+        setMessage("");
+        setLastPrompt("");
+        return;
+      }
+      if (data?.rateLimit) {
+        setThinking(false);
+        setChat([
+          ...chat,
+          { role: "user", text: message },
+          { role: "compare", hitesh: data.error, piyush: data.error },
+        ]);
+        setMessage("");
+        return;
+      }
+      if (data.prompt) setLastPrompt(data.prompt);
+      if (!promptRes.ok || (!data.hitesh && !data.piyush && !data.custom)) {
+        setThinking(false);
+        setChat([
+          ...chat,
+          { role: "user", text: message },
+          { role: "compare", hitesh: data?.error || "Sorry, something went wrong.", piyush: data?.error || "Sorry, something went wrong." },
+        ]);
+        setMessage("");
+        return;
+      }
+      if (persona === "custom") {
+        setChat([
+          ...chat,
+          { role: "user", text: message },
+          { role: "compare", hitesh: "", piyush: "", [customName]: data.custom },
+        ]);
+      } else {
+        setChat([
+          ...chat,
+          { role: "user", text: message },
+          { role: "compare", hitesh: data.hitesh, piyush: data.piyush },
+        ]);
+      }
+      setDotCount(1);
+      setMessage("");
+      setThinking(false);
+      setDotCount(1);
+    } catch (error) {
+      setThinking(false);
+      setDotCount(1);
+      setChat([
+        ...chat,
+        { role: "user", text: message },
+        { role: "compare", hitesh: "Network error.", piyush: "Network error." },
+      ]);
+      setMessage("");
+      setLastPrompt("");
+    }
+  }
+
+  return (
+    <div className="w-full min-h-screen flex flex-col items-center justify-center font-sans bg-gradient-to-br from-[#a1c4fd] via-[#c2e9fb] to-[#fbc2eb] dark:from-gray-900 dark:to-gray-800 transition-all">
+      <h1
+        className="text-6xl md:text-7xl font-black mb-10 text-center bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-500 via-sky-400 to-emerald-400 animate-gradient-x drop-shadow-[0_4px_32px_rgba(99,102,241,0.25)] tracking-tight select-none relative"
+        style={{
+          WebkitTextStroke: '2px #fff',
+          textShadow: '0 2px 24px #a5b4fc, 0 1px 0 #fff',
+        }}
+      >
+        <span className="inline-block animate-gradient-x bg-gradient-to-r from-fuchsia-500 via-sky-400 to-emerald-400 bg-clip-text text-transparent">Persona <span className="font-extrabold">LLM</span> <span className="font-black">Chat</span></span>
+      </h1>
+      <PersonaSelector
+        persona={persona}
+        setPersona={setPersona}
+        customImage={customImage}
+        defaultCustomImage={defaultCustomImage}
+        setCustomName={setCustomName}
+      />
+
+      <PromptDisplay lastPrompt={lastPrompt} />
+      <ChatArea
+        persona={persona}
+        customName={customName}
+        customReady={customReady}
+        creatingPersona={creatingPersona}
+        chat={chat}
+        chatDivRef={chatDivRef}
+        chatEndRef={chatEndRef}
+        firstAIResponseRef={firstAIResponseRef}
+        atTop={atTop}
+        atBottom={atBottom}
+        scrollUp={scrollUp}
+        scrollDown={scrollDown}
+        customImage={customImage}
+        defaultCustomImage={defaultCustomImage}
+      />
+
+      {persona === "custom" && !customReady && (
+        <CustomPersonaInput
+          customName={customName}
+          setCustomName={setCustomName}
+          creatingPersona={creatingPersona}
+          createCustomPersona={createCustomPersona}
+          customReady={customReady}
+        />
+      )}
+      <MessageInput
+        message={message}
+        setMessage={setMessage}
+        sendMessage={sendMessage}
+        thinking={thinking}
+        persona={persona}
+        customReady={customReady}
+        creatingPersona={creatingPersona}
+      />
     </div>
   );
 }
+
