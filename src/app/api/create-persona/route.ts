@@ -3,14 +3,11 @@ import fs from "fs";
 import path from "path";
 import { getLLMResponse } from "@/lib/llm";
 
-// API accepts a name or @username. If @username is provided, the API will attempt to find public profiles for this handle on Instagram, Snapchat, Facebook, LinkedIn, Portfolio, Medium, Hashnode, Peerlist, Twitter/X, etc. and use the data to enrich the persona. Users can mention handles or ids for richer persona creation.
-
 export async function POST(req: Request) {
   const { name } = await req.json();
   if (!name) {
     return NextResponse.json({ error: "Name required" }, { status: 400 });
   }
-  // Detect @username or handle
   let handle = null;
   let personaName = name;
   const handleMatch = name.match(/@([\w.\-_]+)/);
@@ -18,7 +15,6 @@ export async function POST(req: Request) {
     handle = handleMatch[1];
     personaName = handle;
   }
-  // Lookup handle on platforms and fetch public data (GitHub example)
   let publicProfiles: Record<string, any> = {};
   if (handle) {
     const platforms = [
@@ -34,7 +30,6 @@ export async function POST(req: Request) {
       { key: "snapchat", url: `https://snapchat.com/add/${handle}` },
     ];
     publicProfiles = Object.fromEntries(platforms.map((p) => [p.key, p.url]));
-    // GitHub public profile fetch
     try {
       const githubRes = await fetch(`https://api.github.com/users/${handle}`);
       if (githubRes.ok) {
@@ -46,8 +41,44 @@ export async function POST(req: Request) {
           url: data.html_url,
         };
       }
+      const twitterRes = await fetch(
+        `https://cdn.syndication.twimg.com/widgets/followbutton/info.json?screen_names=${handle}`
+      );
+      if (twitterRes.ok) {
+        const data = await twitterRes.json();
+        if (Array.isArray(data) && data[0]) {
+          publicProfiles.twitter = {
+            name: data[0].name,
+            screen_name: data[0].screen_name,
+            followers_count: data[0].followers_count,
+            profile_image_url: data[0].profile_image_url,
+            url: `https://twitter.com/${handle}`,
+          };
+        }
+      }
+      const instaRes = await fetch(
+        `https://www.instagram.com/${handle}/?__a=1&__d=dis`
+      );
+      if (instaRes.ok) {
+        const data = await instaRes.json();
+        if (data.graphql && data.graphql.user) {
+          const user = data.graphql.user;
+          publicProfiles.instagram = {
+            full_name: user.full_name,
+            biography: user.biography,
+            profile_pic_url: user.profile_pic_url,
+            followers: user.edge_followed_by.count,
+            url: `https://instagram.com/${handle}`,
+          };
+        }
+      }
+      publicProfiles.linkedin = {
+        url: `https://linkedin.com/in/${handle}`,
+      };
+      publicProfiles.medium = {
+        url: `https://medium.com/@${handle}`,
+      };
     } catch {}
-    // You can add more fetches for other platforms with public APIs here
   }
   const personaKey = personaName.toLowerCase().replace(/\s+/g, "-");
   let introTemplates: string[] = [];

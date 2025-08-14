@@ -31,7 +31,6 @@ export function buildPrompt(persona, userMessage, displayName, history = []) {
   let personaDisplay = displayName;
   let personaShort = displayName;
   if (persona === "both") {
-    // For 'both', merge hitesh and piyush tone data
     const hiteshPath = path.join(process.cwd(), "data", `hitesh-tone.json`);
     const piyushPath = path.join(process.cwd(), "data", `piyush-tone.json`);
     const hiteshData = JSON.parse(fs.readFileSync(hiteshPath, "utf-8"));

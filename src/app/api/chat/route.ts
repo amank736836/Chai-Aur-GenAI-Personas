@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     persona === "custom" && customName
       ? customName.toLowerCase().replace(/\s+/g, "-")
       : persona;
-  // Remove leading @ from personaKey if present
+
   if (personaKey.startsWith("@")) {
     personaKey = personaKey.slice(1);
   }
