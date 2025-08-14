@@ -41,7 +41,7 @@ function useScrollHelpers() {
 }
 
 
-type ChatMessage =
+export type ChatMessage =
   | { role: "user"; text: string }
   | { role: "compare"; hitesh?: string; piyush?: string;[key: string]: string | undefined };
 

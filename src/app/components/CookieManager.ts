@@ -1,4 +1,3 @@
-
 export function setCookie(name: string, value: string, days = 30) {
   const expires = new Date(Date.now() + days * 864e5).toUTCString();
   document.cookie = `${name}=${encodeURIComponent(
@@ -22,13 +21,15 @@ export async function hashData(data: string): Promise<string> {
   return hashString;
 }
 
-export async function saveChatToCookieWithData(chat: any[]) {
+import type { ChatMessage } from "../page";
+
+export async function saveChatToCookieWithData(chat: ChatMessage[]) {
   const json = JSON.stringify(chat);
   const hash = await hashData(json);
   setCookie("chatHistory", `${hash}|${btoa(json)}`);
 }
 
-export function loadChatFromCookie(): any[] | null {
+export function loadChatFromCookie(): ChatMessage[] | null {
   const val = getCookie("chatHistory");
   if (!val) return null;
   const [hash, encoded] = val.split("|");
