@@ -50,8 +50,9 @@ type ChatMessage =
     | { role: "user"; text: string }
     | { role: "compare"; hitesh?: string; piyush?: string;[key: string]: any };
 
+export type ChatAreaPersona = 'both' | 'hitesh' | 'piyush' | 'custom';
 type ChatAreaProps = {
-    persona: 'both' | 'hitesh' | 'piyush' | 'custom';
+    persona: ChatAreaPersona;
     customName: string;
     customReady: boolean;
     creatingPersona: boolean;

@@ -5,7 +5,7 @@ type MessageInputProps = {
     setMessage: (msg: string) => void;
     sendMessage: () => void;
     thinking: boolean;
-    persona: 'hitesh' | 'piyush' | 'custom';
+    persona: 'hitesh' | 'piyush' | 'custom' | 'both';
     customReady: boolean;
     creatingPersona: boolean;
 };
