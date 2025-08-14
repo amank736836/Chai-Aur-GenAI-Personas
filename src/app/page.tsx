@@ -42,14 +42,10 @@ function useScrollHelpers() {
 
 type ChatMessage =
   | { role: "user"; text: string }
-  | { role: "compare"; hitesh?: string; piyush?: string;[key: string]: any };
+  | { role: "compare"; hitesh?: string; piyush?: string;[key: string]: string | undefined };
 
 const defaultCustomImage = "/file.svg";
-const personaImages: Record<string, string> = {
-  hitesh: "https://yt3.ggpht.com/a/AGF-l7-GpYFwHDMQVXkOcO3Ra8bIoZhhiU3oluiJBw=s900-c-k-c0xffffffff-no-rj-mo",
-  piyush: "https://www.piyushgarg.dev/_next/image?url=%2Fimages%2Favatar.png&w=256&q=75",
-  custom: defaultCustomImage
-};
+
 
 
 export default function Home() {
@@ -187,7 +183,7 @@ export default function Home() {
       let data = null;
       try {
         data = await promptRes.json();
-      } catch (err) {
+      } catch {
         setThinking(false);
         setChat([
           ...chat,
@@ -236,7 +232,7 @@ export default function Home() {
       setMessage("");
       setThinking(false);
       setDotCount(1);
-    } catch (error) {
+    } catch {
       setThinking(false);
       setDotCount(1);
       setChat([
