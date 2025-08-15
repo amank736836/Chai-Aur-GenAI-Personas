@@ -1,8 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
-import { buildPrompt } from "@/lib/prompt";
 import { getLLMResponse } from "@/lib/llm";
-import fs from "fs";
-import path from "path";
+import { buildPrompt } from "@/lib/prompt";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
   const body = await req.json();

@@ -1,11 +1,27 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import ChatArea from "./components/ChatArea";
-import { loadChatFromCookie, saveChatToCookieWithData } from "./components/CookieManager";
+import { getCookie, loadChatFromCookie, saveChatToCookieWithData, setCookie } from "./components/CookieManager";
 import CustomPersonaInput from "./components/CustomPersonaInput";
 import MessageInput from "./components/MessageInput";
 import PersonaSelector from "./components/PersonaSelector";
 import PromptDisplay from "./components/PromptDisplay";
+
+
+async function loadPersonaTone(persona: string, customName: string) {
+  if (persona === "hitesh" || persona === "piyush") {
+    // Always load from static JSON for hitesh/piyush
+    const res = await fetch(`/data/${persona}-tone.json`);
+    if (!res.ok) return null;
+    return await res.json();
+  } else if (persona === "custom" && customName) {
+    // Load from cookie for custom personas
+    const cookie = getCookie("personaData");
+    if (cookie) return JSON.parse(cookie);
+    return null;
+  }
+  return null;
+}
 
 function useScrollHelpers() {
   const chatDivRef = useRef<HTMLDivElement>(null!);
@@ -57,10 +73,22 @@ export default function Home() {
   const [customImage, setCustomImage] = useState<string>(defaultCustomImage);
   const [message, setMessage] = useState("");
   const [chat, setChat] = useState<ChatMessage[]>([]);
+
+  const [personaTone, setPersonaTone] = useState<any>(null);
+
   useEffect(() => {
     const loaded = loadChatFromCookie();
     if (loaded) setChat(loaded);
   }, []);
+
+  // Load persona tone when persona or customName changes
+  useEffect(() => {
+    async function fetchTone() {
+      const tone = await loadPersonaTone(persona, customName);
+      setPersonaTone(tone);
+    }
+    fetchTone();
+  }, [persona, customName]);
 
   useEffect(() => {
     saveChatToCookieWithData(chat);
@@ -134,11 +162,14 @@ export default function Home() {
     setCustomReady(false);
     setCustomImage(defaultCustomImage);
 
-    await fetch("/api/create-persona", {
+    // Call API to create persona
+    const res = await fetch("/api/create-persona", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: customName }),
     });
+    // Store persona data in cookie (for demo, just store the name)
+    setCookie("personaData", JSON.stringify({ name: customName }));
 
     let imageUrl = defaultCustomImage;
     try {
@@ -149,7 +180,6 @@ export default function Home() {
       });
       const imgData = await imgRes.json();
       if (imgData.image) {
-
         const headRes = await fetch(imgData.image, { method: "HEAD" });
         const size = headRes.headers.get("content-length");
         if (!size || parseInt(size) < 500000) {
@@ -273,6 +303,7 @@ export default function Home() {
         setCustomName={setCustomName}
       />
 
+
       <PromptDisplay lastPrompt={lastPrompt} />
       <ChatArea
         persona={persona}
@@ -289,6 +320,7 @@ export default function Home() {
         scrollDown={scrollDown}
         customImage={customImage}
         defaultCustomImage={defaultCustomImage}
+        personaTone={personaTone}
       />
 
       {persona === "custom" && !customReady && (

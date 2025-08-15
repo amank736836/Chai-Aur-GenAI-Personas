@@ -66,6 +66,7 @@ type ChatAreaProps = {
     scrollDown: () => void;
     customImage: string;
     defaultCustomImage: string;
+    personaTone?: any;
 };
 
 const personaImages: Record<string, string> = {

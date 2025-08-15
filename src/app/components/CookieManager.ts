@@ -25,8 +25,7 @@ import type { ChatMessage } from "../page";
 
 export async function saveChatToCookieWithData(chat: ChatMessage[]) {
   const json = JSON.stringify(chat);
-  const hash = await hashData(json);
-  setCookie("chatHistory", `${hash}|${btoa(json)}`);
+  setCookie("chatHistory", `${btoa(json)}`);
 }
 
 export function loadChatFromCookie(): ChatMessage[] | null {
