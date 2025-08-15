@@ -66,7 +66,8 @@ export function buildPrompt(
       if (toneData && toneData.links && Array.isArray(toneData.links)) {
         let instructions = "";
         for (const p of toneData.links) {
-          instructions += `\nIf the user asks for your ${p.key} link, always reply with: ${p.url} (just the direct link, no extra text).`;
+          const label = p.label || p.key || "profile";
+          instructions += `\nIf the user asks for your ${label} link, always reply with: ${p.url} (just the direct link, no extra text).`;
         }
         return instructions;
       }
@@ -103,11 +104,15 @@ export function buildPrompt(
   let toneData;
   let personaDisplay = displayName;
   let personaShort = displayName;
+  let systemPrompt = null;
   if (persona === "both") {
     const hiteshPath = path.join(process.cwd(), "data", `hitesh-tone.json`);
     const piyushPath = path.join(process.cwd(), "data", `piyush-tone.json`);
     const hiteshData = JSON.parse(fs.readFileSync(hiteshPath, "utf-8"));
     const piyushData = JSON.parse(fs.readFileSync(piyushPath, "utf-8"));
+    if (hiteshData.systemPrompt && piyushData.systemPrompt) {
+      systemPrompt = `${hiteshData.systemPrompt}\n\n${piyushData.systemPrompt}`;
+    }
     toneData = {
       styleNotes: [
         ...(hiteshData.styleNotes || []),
@@ -125,6 +130,7 @@ export function buildPrompt(
         ...(hiteshData.signatureQuotes || []),
         ...(piyushData.signatureQuotes || []),
       ],
+      links: [...(hiteshData.links || []), ...(piyushData.links || [])],
     };
     personaDisplay = "HiPi";
     personaShort = "HiPi";
@@ -138,6 +144,9 @@ export function buildPrompt(
       toneData = cookieTone.tone;
       personaDisplay = cookieTone.name || displayName || persona;
       personaShort = cookieTone.name || displayName || persona;
+      if (cookieTone.tone && cookieTone.tone.systemPrompt) {
+        systemPrompt = cookieTone.tone.systemPrompt;
+      }
     } else {
       toneData = {
         styleNotes: [],
@@ -155,6 +164,9 @@ export function buildPrompt(
       `${persona}-tone.json`
     );
     toneData = JSON.parse(fs.readFileSync(toneDataPath, "utf-8"));
+    if (toneData.systemPrompt) {
+      systemPrompt = toneData.systemPrompt;
+    }
     personaDisplay =
       displayName ||
       (persona === "hitesh"
@@ -169,6 +181,27 @@ export function buildPrompt(
         : persona === "piyush"
         ? "Piyush"
         : persona);
+  }
+
+  if (systemPrompt) {
+    let historyText = "";
+    if (Array.isArray(history) && history.length > 0) {
+      historyText = history
+        .map((msg) => {
+          if (msg.role === "user") return `User: ${msg.content}`;
+          if (msg.role === "assistant")
+            return `${personaShort}: ${msg.content}`;
+          return "";
+        })
+        .join("\n");
+    }
+    let promptBody =
+      systemPrompt +
+      "\n" +
+      getLinkInstructions(persona, userMessage, workingLinks);
+    if (historyText) promptBody += "\n" + historyText;
+    promptBody += `\nUser: ${userMessage}\nReply as if you are ${personaShort}, keeping the tone authentic, but do NOT start with greetings or generic openers. Answer the user's question directly, using your unique style and accent only to add flavor to the answer.`;
+    return promptBody;
   }
 
   let signatureLines =
@@ -193,18 +226,22 @@ export function buildPrompt(
       .join("\n");
   }
 
+  let styleNotesArr = Array.isArray(toneData.styleNotes)
+    ? toneData.styleNotes
+    : [];
+  let introPhrasesArr = Array.isArray(toneData.introPhrases)
+    ? toneData.introPhrases
+    : [];
   let promptBody = `You are acting as ${personaDisplay}.
-Tone guidelines:
-${toneData.styleNotes.map((n, i) => `${i + 1}. ${n}`).join("\n")}
+  Tone guidelines:
+  ${styleNotesArr.map((n, i) => `${i + 1}. ${n}`).join("\n")}
 
-Common phrases to use (for accent, not for greetings):
-${(Array.isArray(toneData.introPhrases) ? toneData.introPhrases : []).join(
-  ", "
-)}
-${signatureLines.length ? `\nSignature: ${signatureLines.join(", ")}` : ""}
+  Common phrases to use (for accent, not for greetings):
+  ${introPhrasesArr.join(", ")}
+  ${signatureLines.length ? `\nSignature: ${signatureLines.join(", ")}` : ""}
 
-${historyText}
-`;
+  ${historyText}
+  `;
 
   promptBody += getLinkInstructions(persona, userMessage, workingLinks);
 
