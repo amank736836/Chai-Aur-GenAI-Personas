@@ -1,4 +1,3 @@
-type PersonaTone = Record<string, unknown>;
 "use client";
 import { useEffect, useRef, useState } from "react";
 import ChatArea from "./components/ChatArea";
@@ -8,15 +7,14 @@ import MessageInput from "./components/MessageInput";
 import PersonaSelector from "./components/PersonaSelector";
 import PromptDisplay from "./components/PromptDisplay";
 
+type PersonaTone = Record<string, unknown>;
 
 async function loadPersonaTone(persona: string, customName: string) {
   if (persona === "hitesh" || persona === "piyush") {
-    // Always load from static JSON for hitesh/piyush
     const res = await fetch(`/data/${persona}-tone.json`);
     if (!res.ok) return null;
     return await res.json();
   } else if (persona === "custom" && customName) {
-    // Load from cookie for custom personas
     const cookie = getCookie("personaData");
     if (cookie) return JSON.parse(cookie);
     return null;

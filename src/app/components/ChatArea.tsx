@@ -1,3 +1,4 @@
+"use client";
 type PersonaTone = Record<string, unknown>;
 import React, { useState } from "react";
 function renderTextWithLinks(text: string) {
