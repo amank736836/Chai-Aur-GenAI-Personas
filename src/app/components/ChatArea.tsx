@@ -1,3 +1,4 @@
+type PersonaTone = Record<string, unknown>;
 import React, { useState } from "react";
 function renderTextWithLinks(text: string) {
     const urlRegex = /(https?:\/\/[^\s]+)/g;
@@ -66,7 +67,7 @@ type ChatAreaProps = {
     scrollDown: () => void;
     customImage: string;
     defaultCustomImage: string;
-    personaTone?: any;
+    personaTone?: PersonaTone;
 };
 
 const personaImages: Record<string, string> = {

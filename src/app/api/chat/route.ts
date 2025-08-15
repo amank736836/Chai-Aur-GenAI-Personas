@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
     personaKey = personaKey.slice(1);
   }
 
-  let history = [];
+  const history = [];
   history.push({ role: "user", content: message });
 
   try {

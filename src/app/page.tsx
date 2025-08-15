@@ -1,3 +1,4 @@
+type PersonaTone = Record<string, unknown>;
 "use client";
 import { useEffect, useRef, useState } from "react";
 import ChatArea from "./components/ChatArea";
@@ -74,7 +75,7 @@ export default function Home() {
   const [message, setMessage] = useState("");
   const [chat, setChat] = useState<ChatMessage[]>([]);
 
-  const [personaTone, setPersonaTone] = useState<any>(null);
+  const [personaTone, setPersonaTone] = useState<PersonaTone | null>(null);
 
   useEffect(() => {
     const loaded = loadChatFromCookie();
