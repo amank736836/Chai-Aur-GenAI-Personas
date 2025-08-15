@@ -6,10 +6,24 @@ function renderTextWithLinks(text: string) {
     const parts = text.split(urlRegex);
     return parts.map((part, i) => {
         if (urlRegex.test(part)) {
-            return <CopyableLink key={i} url={part} />;
+            return <span key={i} className="inline-flex items-center gap-1"><CopyableLink url={part} /><VisitButton url={part} /></span>;
         }
         return <React.Fragment key={i}>{part}</React.Fragment>;
     });
+}
+
+function VisitButton({ url }: { url: string }) {
+    return (
+        <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="ml-1 px-2 py-1 rounded border border-blue-400 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold transition-colors"
+            title="Visit link"
+        >
+            Visit
+        </a>
+    );
 }
 
 function CopyableLink({ url }: { url: string }) {

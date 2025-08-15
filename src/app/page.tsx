@@ -80,7 +80,6 @@ export default function Home() {
     if (loaded) setChat(loaded);
   }, []);
 
-  // Load persona tone when persona or customName changes
   useEffect(() => {
     async function fetchTone() {
       const tone = await loadPersonaTone(persona, customName);
@@ -161,13 +160,11 @@ export default function Home() {
     setCustomReady(false);
     setCustomImage(defaultCustomImage);
 
-    // Call API to create persona
     const res = await fetch("/api/create-persona", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: customName }),
     });
-    // Store persona data in cookie (for demo, just store the name)
     setCookie("personaData", JSON.stringify({ name: customName }));
 
     let imageUrl = defaultCustomImage;
@@ -205,11 +202,17 @@ export default function Home() {
         { role: "user", text: message },
         { role: "compare", hitesh: "", piyush: "", [customName]: `${customName} is thinking${dots}` },
       ]);
+    } else if (persona === "both") {
+      setChat([
+        ...chat,
+        { role: "user", text: message },
+        { role: "compare", hitesh: `Hitesh is thinking${dots}`, piyush: `Piyush is thinking${dots}` },
+      ]);
     } else {
       setChat([
         ...chat,
         { role: "user", text: message },
-        { role: "compare", hitesh: persona === "hitesh" || persona === "piyush" ? `Hitesh is thinking${dots}` : "", piyush: persona === "hitesh" || persona === "piyush" ? `Piyush is thinking${dots}` : "" },
+        { role: "compare", hitesh: persona === "hitesh" ? `Hitesh is thinking${dots}` : "", piyush: persona === "piyush" ? `Piyush is thinking${dots}` : "" },
       ]);
     }
     try {
@@ -223,48 +226,53 @@ export default function Home() {
         data = await promptRes.json();
       } catch {
         setThinking(false);
-        setChat([
-          ...chat,
-          { role: "user", text: message },
-          { role: "compare", hitesh: "Sorry, there was a problem with the response.", piyush: "Sorry, there was a problem with the response." },
-        ]);
+        setChat(prev => {
+          const updated = [...prev];
+          const idx = updated.map(m => m.role).lastIndexOf("compare");
+          if (idx !== -1) updated[idx] = { role: "compare", hitesh: "Sorry, there was a problem with the response.", piyush: "Sorry, there was a problem with the response." };
+          return updated;
+        });
         setMessage("");
         setLastPrompt("");
         return;
       }
       if (data?.rateLimit) {
         setThinking(false);
-        setChat([
-          ...chat,
-          { role: "user", text: message },
-          { role: "compare", hitesh: data.error, piyush: data.error },
-        ]);
+        setChat(prev => {
+          const updated = [...prev];
+          const idx = updated.map(m => m.role).lastIndexOf("compare");
+          if (idx !== -1) updated[idx] = { role: "compare", hitesh: data.error, piyush: data.error };
+          return updated;
+        });
         setMessage("");
         return;
       }
       if (data.prompt) setLastPrompt(data.prompt);
       if (!promptRes.ok || (!data.hitesh && !data.piyush && !data.custom)) {
         setThinking(false);
-        setChat([
-          ...chat,
-          { role: "user", text: message },
-          { role: "compare", hitesh: data?.error || "Sorry, something went wrong.", piyush: data?.error || "Sorry, something went wrong." },
-        ]);
+        setChat(prev => {
+          const updated = [...prev];
+          const idx = updated.map(m => m.role).lastIndexOf("compare");
+          if (idx !== -1) updated[idx] = { role: "compare", hitesh: data?.error || "Sorry, something went wrong.", piyush: data?.error || "Sorry, something went wrong." };
+          return updated;
+        });
         setMessage("");
         return;
       }
       if (persona === "custom") {
-        setChat([
-          ...chat,
-          { role: "user", text: message },
-          { role: "compare", hitesh: "", piyush: "", [customName]: data.custom },
-        ]);
+        setChat(prev => {
+          const updated = [...prev];
+          const idx = updated.map(m => m.role).lastIndexOf("compare");
+          if (idx !== -1) updated[idx] = { role: "compare", hitesh: "", piyush: "", [customName]: data.custom };
+          return updated;
+        });
       } else {
-        setChat([
-          ...chat,
-          { role: "user", text: message },
-          { role: "compare", hitesh: data.hitesh, piyush: data.piyush },
-        ]);
+        setChat(prev => {
+          const updated = [...prev];
+          const idx = updated.map(m => m.role).lastIndexOf("compare");
+          if (idx !== -1) updated[idx] = { role: "compare", hitesh: data.hitesh, piyush: data.piyush };
+          return updated;
+        });
       }
       setDotCount(1);
       setMessage("");
@@ -273,11 +281,12 @@ export default function Home() {
     } catch {
       setThinking(false);
       setDotCount(1);
-      setChat([
-        ...chat,
-        { role: "user", text: message },
-        { role: "compare", hitesh: "Network error.", piyush: "Network error." },
-      ]);
+      setChat(prev => {
+        const updated = [...prev];
+        const idx = updated.map(m => m.role).lastIndexOf("compare");
+        if (idx !== -1) updated[idx] = { role: "compare", hitesh: "Network error.", piyush: "Network error." };
+        return updated;
+      });
       setMessage("");
       setLastPrompt("");
     }

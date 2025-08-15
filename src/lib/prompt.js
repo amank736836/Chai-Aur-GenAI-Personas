@@ -26,7 +26,80 @@ function pickRandomNoRepeat(arr, n, persona, key) {
   return out;
 }
 
-export function buildPrompt(persona, userMessage, displayName, history = []) {
+/**
+ * @param {string} persona
+ * @param {string} userMessage
+ * @param {string} displayName
+ * @param {Array} history
+ * @param {Object | undefined} cookies
+ * @param {Array<{key: string, url: string}> | undefined} workingLinks
+ */
+export function buildPrompt(
+  persona,
+  userMessage,
+  displayName,
+  history = [],
+  cookies = undefined,
+  workingLinks = undefined
+) {
+  function getCookiePersonaTone(persona) {
+    if (!persona) return null;
+    const cookieName = `personaData-${persona
+      .toLowerCase()
+      .replace(/\s+/g, "-")}`;
+    if (cookies && cookies[cookieName]) {
+      try {
+        const data =
+          typeof cookies[cookieName] === "string"
+            ? JSON.parse(decodeURIComponent(cookies[cookieName]))
+            : cookies[cookieName];
+        if (data && data.tone) return data;
+      } catch {}
+    }
+    return null;
+  }
+  // Helper: If persona is @username and user asks for a link, add explicit instruction
+  function getLinkInstructions(persona, userMessage, workingLinks) {
+    // For built-in personas, always include all links from tone JSON if present
+    if (["hitesh", "piyush", "both"].includes(persona)) {
+      // Try to load links from toneData if available
+      if (toneData && toneData.links && Array.isArray(toneData.links)) {
+        let instructions = "";
+        for (const p of toneData.links) {
+          instructions += `\nIf the user asks for your ${p.key} link, always reply with: ${p.url} (just the direct link, no extra text).`;
+        }
+        return instructions;
+      }
+      return "";
+    }
+    // For custom personas, use only workingLinks if provided
+    if (!persona) return "";
+    const username = persona.replace(/^@/, "");
+    const lowerMsg = userMessage.toLowerCase();
+    const platforms = workingLinks || [
+      { key: "instagram", url: `https://www.instagram.com/${username}/` },
+      { key: "twitter", url: `https://twitter.com/${username}` },
+      { key: "x", url: `https://x.com/${username}` },
+      { key: "github", url: `https://github.com/${username}` },
+      { key: "facebook", url: `https://facebook.com/${username}` },
+      { key: "hashnode", url: `https://hashnode.com/@${username}` },
+      { key: "medium", url: `https://medium.com/@${username}` },
+      { key: "peerlist", url: `https://peerlist.io/${username}` },
+      { key: "reddit", url: `https://www.reddit.com/user/${username}` },
+      { key: "youtube", url: `https://www.youtube.com/@${username}` },
+    ];
+    let instructions = "";
+    for (const p of platforms) {
+      if (
+        (lowerMsg.includes(p.key) && lowerMsg.match(/link|url/)) ||
+        lowerMsg.match(new RegExp(`${p.key}.*(link|url)`)) ||
+        lowerMsg.match(new RegExp(`(link|url).*${p.key}`))
+      ) {
+        instructions += `\nIf the user asks for your ${p.key} link, always reply with: ${p.url} (just the direct link, no extra text).`;
+      }
+    }
+    return instructions;
+  }
   let toneData;
   let personaDisplay = displayName;
   let personaShort = displayName;
@@ -55,6 +128,26 @@ export function buildPrompt(persona, userMessage, displayName, history = []) {
     };
     personaDisplay = "HiPi";
     personaShort = "HiPi";
+  } else if (
+    persona !== "hitesh" &&
+    persona !== "piyush" &&
+    persona !== "both"
+  ) {
+    let cookieTone = getCookiePersonaTone(persona);
+    if (cookieTone && cookieTone.tone) {
+      toneData = cookieTone.tone;
+      personaDisplay = cookieTone.name || displayName || persona;
+      personaShort = cookieTone.name || displayName || persona;
+    } else {
+      toneData = {
+        styleNotes: [],
+        introPhrases: [],
+        signatureLines: [],
+        signatureQuotes: [],
+      };
+      personaDisplay = displayName || persona;
+      personaShort = displayName || persona;
+    }
   } else {
     const toneDataPath = path.join(
       process.cwd(),
@@ -112,6 +205,8 @@ ${signatureLines.length ? `\nSignature: ${signatureLines.join(", ")}` : ""}
 
 ${historyText}
 `;
+
+  promptBody += getLinkInstructions(persona, userMessage, workingLinks);
 
   promptBody += `User: ${userMessage}\nReply as if you are ${personaShort}, keeping the tone authentic, but do NOT start with greetings or generic openers. Answer the user's question directly, using your unique style and accent only to add flavor to the answer.`;
   return promptBody;
