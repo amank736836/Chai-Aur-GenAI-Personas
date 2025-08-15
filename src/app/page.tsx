@@ -321,7 +321,7 @@ export default function Home() {
         scrollDown={scrollDown}
         customImage={customImage}
         defaultCustomImage={defaultCustomImage}
-        personaTone={personaTone}
+        personaTone={personaTone || undefined}
       />
 
       {persona === "custom" && !customReady && (
