@@ -138,17 +138,6 @@ export async function POST(req: Request) {
     introPhrases: pickRandom(introTemplates, 7),
     styleNotes: pickRandom(styleTemplates, 3),
   };
-  const dataDir = path.join(process.cwd(), "data");
-  if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir);
-  fs.writeFileSync(
-    path.join(dataDir, `${personaKey}-tone.json`),
-    JSON.stringify(toneData, null, 2),
-    "utf-8"
-  );
-  fs.writeFileSync(
-    path.join(dataDir, `${personaKey}-history.json`),
-    JSON.stringify([], null, 2),
-    "utf-8"
-  );
+  // Removed file writes for Vercel compatibility
   return NextResponse.json({ success: true });
 }

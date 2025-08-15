@@ -20,16 +20,7 @@ export async function POST(req: NextRequest) {
     personaKey = personaKey.slice(1);
   }
 
-  const dataDir = path.join(process.cwd(), "data");
-  const historyPath = path.join(dataDir, `${personaKey}-history.json`);
   let history = [];
-  if (fs.existsSync(historyPath)) {
-    try {
-      history = JSON.parse(fs.readFileSync(historyPath, "utf-8"));
-    } catch {
-      history = [];
-    }
-  }
   history.push({ role: "user", content: message });
 
   try {
@@ -57,16 +48,7 @@ export async function POST(req: NextRequest) {
         { role: "user", content: message },
         { role: "assistant", content: replyHitesh },
       ];
-      fs.writeFileSync(
-        path.join(dataDir, `hitesh-history.json`),
-        JSON.stringify(newHistory, null, 2),
-        "utf-8"
-      );
-      fs.writeFileSync(
-        path.join(dataDir, `piyush-history.json`),
-        JSON.stringify(newHistory, null, 2),
-        "utf-8"
-      );
+      // Removed file writes for Vercel compatibility
       return NextResponse.json({
         hitesh: replyHitesh,
         piyush: replyPiyush,
@@ -86,11 +68,7 @@ export async function POST(req: NextRequest) {
         { role: "user", content: message },
         { role: "assistant", content: replyCustom },
       ];
-      fs.writeFileSync(
-        historyPath,
-        JSON.stringify(newHistory, null, 2),
-        "utf-8"
-      );
+      // Removed file writes for Vercel compatibility
       return NextResponse.json({
         custom: replyCustom,
         history: newHistory,
