@@ -57,13 +57,11 @@ export default function Home() {
   const [customImage, setCustomImage] = useState<string>(defaultCustomImage);
   const [message, setMessage] = useState("");
   const [chat, setChat] = useState<ChatMessage[]>([]);
-  // Load chat from cookie on mount
   useEffect(() => {
     const loaded = loadChatFromCookie();
     if (loaded) setChat(loaded);
   }, []);
 
-  // Save chat to cookie on change
   useEffect(() => {
     saveChatToCookieWithData(chat);
   }, [chat]);

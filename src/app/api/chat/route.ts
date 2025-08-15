@@ -48,7 +48,6 @@ export async function POST(req: NextRequest) {
         { role: "user", content: message },
         { role: "assistant", content: replyHitesh },
       ];
-      // Removed file writes for Vercel compatibility
       return NextResponse.json({
         hitesh: replyHitesh,
         piyush: replyPiyush,
@@ -68,7 +67,6 @@ export async function POST(req: NextRequest) {
         { role: "user", content: message },
         { role: "assistant", content: replyCustom },
       ];
-      // Removed file writes for Vercel compatibility
       return NextResponse.json({
         custom: replyCustom,
         history: newHistory,

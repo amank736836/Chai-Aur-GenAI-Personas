@@ -1,6 +1,4 @@
 import { NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
 import { getLLMResponse } from "@/lib/llm";
 
 export async function POST(req: Request) {
@@ -79,7 +77,6 @@ export async function POST(req: Request) {
       };
     } catch {}
   }
-  const personaKey = personaName.toLowerCase().replace(/\s+/g, "-");
   let introTemplates: string[] = [];
   try {
     const prompt = `You are an expert in analyzing public personalities. Generate a list of 10 unique, catchy, and authentic intro phrases or taglines that ${personaName} (the famous public figure, if known) might use to start a conversation, greet an audience, or introduce themselves. Each phrase should reflect their real-life style, language, and persona. Output as a JSON array of strings, Hindi/English/Hinglish as appropriate, no explanations.\nIf you have public profile data, use it to make the persona more realistic. Public profiles: ${JSON.stringify(
@@ -134,10 +131,5 @@ export async function POST(req: Request) {
     }
     return out;
   }
-  const toneData = {
-    introPhrases: pickRandom(introTemplates, 7),
-    styleNotes: pickRandom(styleTemplates, 3),
-  };
-  // Removed file writes for Vercel compatibility
   return NextResponse.json({ success: true });
 }
